@@ -1,11 +1,11 @@
 /*
- * Custom class selector for Vice City: Multiplayer (VC:MP) 0.4 servers
+ * Custom class selector for Vice City: Multiplayer (VC:MP) 0.4
  * Author: sfwidde ([R3V]Kelvin)
  * 2024-07-08
  */
 
-const MAX_CLASS_SELECTOR_PLAYERS = 100;  // Change it to whatever max. player limit your server enforces.
-const CLASS_SELECTOR_CAMERA_TIME = 1000; // Milliseconds
+const MAX_CLASS_SELECTOR_PLAYERS = 100;
+const CLASS_SELECTOR_CAMERA_TIME = 1000;
 
 class PlayerClass
 {
@@ -149,9 +149,7 @@ function ClassSelector::ForcePlayerSelect(player, offset = 0)
 function ClassSelector::SpawnPlayer(player)
 {
 	local selectorInfo = playersSelectorInfo[player.ID];
-	if (!selectorInfo.canSelect) { return; }
-
-	local classData = classesList[selectorInfo.lastIndex];
+	local classData    = classesList[selectorInfo.lastIndex];
 	local spawnWeapons = classData.spawnWeapons;
 	player.Team  = classData.teamId;
 	player.Color = classData.color;
@@ -177,6 +175,11 @@ function ClassSelector::SpawnPlayer(player)
 	{
 		::CustomOnPlayerSpawn(player);
 	}
+}
+
+function ClassSelector::IsPlayerSelectingClass(player)
+{
+	return playersSelectorInfo[player.ID].canSelect;
 }
 
 function ClassSelector::IsPlayerSpawned(player)

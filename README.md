@@ -1,40 +1,42 @@
 # Custom class selector for Vice City: Multiplayer (VC:MP) 0.4 Squirrel servers
-
 Click on the video below to find out what it looks like:
 
 [![VCMP | Custom Class Selector](https://img.youtube.com/vi/w29XKjFQd10/0.jpg)](https://www.youtube.com/watch?v=w29XKjFQd10)
 
-## Installation
-1. If you haven't already, download and install
+## Installation steps
+1. Download and install
 [**sqlatestfeatures** plugin](https://github.com/sfwidde/vcmp-latest-features-for-squirrel/releases/latest)
-to your Squirrel server for new 0.4.7 features to be available.
-2. Download **classelector.nut** server-side script file found on this
+to your server if you haven't already, for new 0.4.7 features to be available.
+2. Download [**classelector.nut**](https://raw.githubusercontent.com/sfwidde/vcmp-custom-class-selector/main/classelector.nut) server-side script file found on this
 repository, paste it to your server, and load it via `dofile()`.
 3. Move ALL of your `onPlayerRequestClass`, `onPlayerRequestSpawn` and
-`onPlayerSpawn` events' logic (if any), to these new events with their
-respectively form, leaving the aforementioned official events empty:
+`onPlayerSpawn` official events' logic (if any), to these new events with their
+respective form, leaving the aforementioned official events empty:
 ```
-function CustomOnPlayerRequestClass(player, classID) {
+function CustomOnPlayerRequestClass(player, classID)
+{
 	// If your script relies on 'team' and 'skin' variables provided by the
 	// official 'onPlayerRequestClass' event, you could just do something like
 	//
 	// local team = player.Team;
 	// local skin = player.Skin;
 	//
-	// and it would essentially be the same.
+	// at the top of this event and it would essentially be the same.
 }
 ```
 ```
-function CustomOnPlayerRequestSpawn(player) {
+function CustomOnPlayerRequestSpawn(player)
+{
 	return 1; // 0/false/null disallows spawn, any other value allows it.
 }
 ```
 ```
-function CustomOnPlayerSpawn(player) {
+function CustomOnPlayerSpawn(player)
+{
 }
 ```
 4. Add the following lines to the following official events -- if you make no
-use of any of the events below, create them:
+use of any of the events below, create them!
 	- `onScriptLoad` OR (cannot be both!) `onServerStart`:
 	```
 	ClassSelector.HandleScriptLoadEvent();
@@ -66,44 +68,49 @@ use of any of the events below, create them:
 
 ## `classelector.nut` file
 ### Constants
-- (int) `MAX_CLASS_SELECTOR_PLAYERS`: Change it if your server enforces a
-different maximum player count than 100 AND does NOT change player count at ANY
-point of its lifetime (except when the server is initializing).
+- (int) `MAX_CLASS_SELECTOR_PLAYERS`: Change its value if your server enforces
+a different maximum player count than 100 AND does NOT change player count at
+ANY point of its lifetime (except when the server is initializing).
 - (int) `CLASS_SELECTOR_CAMERA_TIME`: Time in milliseconds a player's camera
-takes from switching from one class to another.
+takes when switching from one class to another.
 
 ### Functions
 - `void ClassSelector::AddPlayerClass(int teamId, int skinId, RGB color,
 Vector spawnPos, float spawnAngle, Vector cameraOffset[, int spawnWeapon1Id,
 int spawnWeapon1Ammo, int spawnWeapon2Id, int spawnWeapon2Ammo, ...])`
 	- Adds a new custom player class.
-	- (New!) Parameter `cameraOffset`: Offset distance from player's position
-	and player's camera. Camera will always look at the player in question but
-	this is how we control where to position it.
+	- (New!) Parameter `cameraOffset`: Offset distance between player's
+	position and player's camera. Camera will always look at the player in
+	question but this is how we control where to position it.
 	- (New!) Spawn weapons are no longer limited to 3 mandatory weapons per
 	class - weapons are now optional and limitless.
-- `void ClassSelector::ForcePlayerSelect(player)`
-	- Puts player back to the request class screen.
-- `void ClassSelector::SpawnPlayer(player)`
-	- Forces player to spawn, if unspawned.
-- `bool ClassSelector::IsPlayerSpawned(player)`
+- `void ClassSelector::ForcePlayerSelect(CPlayer)`
+	- Puts player back to the custom class selector screen.
+- `void ClassSelector::SpawnPlayer(CPlayer)`
+	- Forces player to spawn.
+- `bool ClassSelector::IsPlayerSelectingClass(CPlayer)`
+	- Returns `true` if player is on the custom class selector screen, `false`
+	otherwise.
+- `bool ClassSelector::IsPlayerSpawned(CPlayer)`
 	- Returns `true` if player is spawned, `false` otherwise.
 
-### Notes
-You will have to replace *every* call to `player.IsSpawned` in your code to
-`ClassSelector.IsPlayerSpawned(player)` to prevent bugs in your gamemode.
-
-`void ClassSelector::HandleScriptLoadEvent(void)` does the following to your
+## Notes
+1. You will have to replace *every* call to the following `CPlayer` methods (if
+applicable) to prevent bugs in your gamemode:
+	- `CPlayer::Select(void)` -> `ClassSelector::ForcePlayerSelect(CPlayer)`
+	- `CPlayer::Spawn(void)` -> `ClassSelector::SpawnPlayer(CPlayer)`
+	- `CPlayer::Spawned(void)` / `CPlayer::IsSpawned(void)` ->
+	`ClassSelector::IsPlayerSpawned(CPlayer)`
+2. `void ClassSelector::HandleScriptLoadEvent(void)` does the following to your
 server:
-- Disables built-in class selection (`SetUseClasses(false)`).
-- Disables **/kill** client built-in command (`SetKillDelay(255)`).
+	- Disables built-in class selection (`SetUseClasses(false)`).
+	- Disables **/kill** client built-in command (`SetKillDelay(255)`).
 
-Re-enabling the above settings is **not** recommended and could lead to
-unexpected behavior.
+	Re-enabling the above settings is **not** recommended and could lead to
+	unexpected behavior as to what this snippet concerns.
 
 ## Examples
-This is the code that was used to record demonstration video above, hopefully
-you will have a better understanding on how adding a custom class works:
+Example #1:
 ```
 ClassSelector.AddPlayerClass(
 	0,                                   // Team ID
@@ -162,4 +169,37 @@ ClassSelector.AddPlayerClass(
 	-1.18129,
 	Vector(4.0, 3.0, -0.25)
 );
+```
+
+Example #2:
+```
+function onPlayerCommand(player, cmd, text)
+{
+	switch (cmd = cmd.tolower())
+	{
+	case "select":
+		ClassSelector.ForcePlayerSelect(player);
+		PrivMessage(player, "You have been put back to the spawn screen.");
+		return;
+
+	case "spawn":
+		ClassSelector.SpawnPlayer(player);
+		PrivMessage(player, "You have been forced to spawn.");
+		return;
+
+	case "selectingclass":
+		PrivMessage(player, "You are " + (ClassSelector.IsPlayerSelectingClass(player) ?
+			"" : "not ") + "selecting class.");
+		return;
+
+	case "spawned":
+		PrivMessage(player, "You are " + (ClassSelector.IsPlayerSpawned(player) ?
+			"" : "not ") + "spawned.");
+		return;
+
+	default:
+		ClientMessage("Unknown command!", player, 255, 0, 0);
+		return;
+	}
+}
 ```
