@@ -123,6 +123,9 @@ function ClassSelector::ForcePlayerSelect(player, offset = 0)
 	);
 	player.World    = player.UniqueWorld;
 	player.IsFrozen = true;
+	player.Immunity = 0xFF;
+	player.Health   = 100.0;
+	player.Armour   = 0.0;
 	player.Pos      = spawnPos;
 	player.Angle    = classData.spawnAngle;
 	player.Skin     = classData.skinId;
@@ -133,8 +136,6 @@ function ClassSelector::ForcePlayerSelect(player, offset = 0)
 		player.SetWeapon(spawnWeapons[spawnWeaponsLen - 2], spawnWeapons[spawnWeaponsLen - 1]);
 	}
 	player.Color  = classData.color;
-	player.Health = 100.0;
-	player.Armour = 0.0;
 
 	selectorInfo.lastIndex = newIndex;
 	selectorInfo.canSelect = true;
@@ -163,6 +164,7 @@ function ClassSelector::SpawnPlayer(player)
 	}
 	player.Health   = 100.0;
 	player.Armour   = 0.0;
+	player.Immunity = 0x00;
 	player.IsFrozen = false;
 	player.World    = 1;
 	player.RestoreCamera();
